@@ -28,3 +28,7 @@ El sistema generará automáticamente las carpetas necesarias al ejecutarse por 
 ```text
 /
 ├── final.py                  # Script principal del sistema
+├── usuarios_registrados.txt  # Base de datos local de usuarios (se crea al registrarse)
+└── datos_clases/             # Carpeta donde se guardan los JSON de cada ciclo escolar
+    ├── Ciclo_2025_A.txt
+    └── ...
