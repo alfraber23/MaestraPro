@@ -32,3 +32,49 @@ El sistema generará automáticamente las carpetas necesarias al ejecutarse por 
 └── datos_clases/             # Carpeta donde se guardan los JSON de cada ciclo escolar
     ├── Ciclo_2025_A.txt
     └── ...
+```
+## ⚡ Guía de Inicio Rápido
+
+Sigue estos pasos para poner en marcha el sistema en tu entorno local:
+
+1.  **Pre-requisitos:**
+    Asegúrate de tener Python instalado. Puedes verificarlo escribiendo en tu terminal:
+    ```bash
+    python --version
+    ```
+
+2.  **Instalación:**
+    Simplemente descarga el archivo `final.py` en una carpeta de tu preferencia.
+
+3.  **Ejecución:**
+    Abre tu terminal en la carpeta del proyecto y ejecuta:
+    ```bash
+    python final.py
+    ```
+
+4.  **Primeros Pasos en el Sistema:**
+    * **Paso 1:** Selecciona **[2] Registrarse** para crear tu cuenta de docente (Usuario/Contraseña).
+    * **Paso 2:** Inicia sesión.
+    * **Paso 3:** Crea tu primer grupo con **[1] Nuevo Ciclo Escolar** y define tus porcentajes de evaluación.
+    * **Paso 4:** Registra alumnos con la opción **[5]**.
+    * **Paso 5:** ¡Empieza a calificar! Ve a **[7] Capturar Calif.** y sigue el flujo interactivo.
+
+---
+
+## 📸 Capturas de Funcionalidad
+
+El sistema opera completamente en la terminal con una interfaz limpia y colorida.
+
+**1. Menú Principal (Dashboard):**
+El centro de control donde gestionas todo el ciclo escolar.
+```text
+Usuario: BETO | Ciclo Escolar: Ciclo_2025_A (SIN GUARDAR)
+Fecha Op: 01/12/2025
+------------------------------------------------------------
+[1] Nuevo Ciclo Escolar   |   [2] Cargar Ciclo      
+[3] Guardar Cambios       |   [4] Cerrar Sesión     
+[5] Registrar Alumno      |   [6] Ver Lista Alumnos 
+[7] Capturar Calif.       |   [8] Tomar Asistencia  
+[9] Consultar Alumno      |   [0] Salir del Sistema 
+------------------------------------------------------------
+```
