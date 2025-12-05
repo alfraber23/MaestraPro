@@ -1,15 +1,13 @@
-# database.py
+# database.py ACTUALIZADO (v3.1)
 import sqlite3
 import os
 
 DB_NAME = "sistema_escolar.db"
 
 def conectar_db():
-    """Crea y devuelve una conexión a la base de datos."""
     return sqlite3.connect(DB_NAME)
 
 def inicializar_db():
-    """Crea las tablas necesarias si no existen."""
     conexion = conectar_db()
     cursor = conexion.cursor()
 
@@ -23,7 +21,6 @@ def inicializar_db():
     ''')
 
     # 2. Tabla de CICLOS ESCOLARES (Grupos)
-    # Guardamos el encuadre (porcentajes) aquí mismo
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS ciclos (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -50,10 +47,6 @@ def inicializar_db():
     ''')
 
     # 4. Tabla de CALIFICACIONES
-    # Guardamos todo desglosado. 
-    # periodo: 1, 2, 3
-    # campo: "Lenguajes", "Saberes", etc.
-    # criterio: "tareas", "examen", etc.
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS calificaciones (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -72,26 +65,33 @@ def inicializar_db():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             alumno_id INTEGER,
             fecha TEXT,
-            presente INTEGER, -- 1 = Si, 0 = No
+            presente INTEGER,
             FOREIGN KEY(alumno_id) REFERENCES alumnos(id) ON DELETE CASCADE
         )
     ''')
     
-    # Tabla especial para configurar el MAXIMO de trabajos por periodo y ciclo
+    # --- CAMBIO IMPORTANTE AQUÍ ---
+    # 6. Tabla de CONFIGURACIÓN DE TRABAJOS
+    # Ahora guardamos el máximo POR CAMPO FORMATIVO
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS config_trabajos (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            ciclo_id INTEGER,
-            periodo INTEGER,
-            max_trabajos INTEGER DEFAULT 0,
-            FOREIGN KEY(ciclo_id) REFERENCES ciclos(id) ON DELETE CASCADE
+             id INTEGER PRIMARY KEY AUTOINCREMENT,
+             ciclo_id INTEGER,
+             campo_formativo TEXT,  -- <--- Agregamos esto
+             periodo INTEGER,
+             max_trabajos INTEGER DEFAULT 0,
+             FOREIGN KEY(ciclo_id) REFERENCES ciclos(id) ON DELETE CASCADE,
+             UNIQUE(ciclo_id, campo_formativo, periodo) -- Evita duplicados
         )
     ''')
 
     conexion.commit()
     conexion.close()
-    print("Base de datos inicializada correctamente: sistema_escolar.db")
+    print("Base de datos (v3.1) inicializada correctamente.")
 
-# Si ejecutamos este archivo directamente, inicializa la DB
 if __name__ == "__main__":
+    if os.path.exists(DB_NAME):
+        os.remove(DB_NAME)
+        print("Base de datos anterior eliminada para actualización.")
+    
     inicializar_db()
