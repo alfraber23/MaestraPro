@@ -55,10 +55,10 @@ class SistemaEscolarApp:
         self.entry_pass.pack(fill="x", pady=PAD_Y)
 
         tk.Button(frame, text="Entrar", bg=COLOR_SUCCESS, fg="white", font=FONT_LABEL, 
-                  command=self.accion_login).pack(fill="x", pady=20)
+                command=self.accion_login).pack(fill="x", pady=20)
         
         tk.Button(frame, text="Registrarse", fg="blue", relief="flat",
-                  command=self.mostrar_registro).pack()
+                command=self.mostrar_registro).pack()
 
     def mostrar_registro(self):
         self.limpiar_ventana()
@@ -76,7 +76,7 @@ class SistemaEscolarApp:
         self.entry_pass_reg.pack(fill="x", pady=PAD_Y)
 
         tk.Button(frame, text="Registrar", bg=COLOR_PRIMARY, fg="white", font=FONT_LABEL, 
-                  command=self.accion_registro).pack(fill="x", pady=20)
+                command=self.accion_registro).pack(fill="x", pady=20)
         tk.Button(frame, text="Cancelar", command=self.mostrar_login).pack()
 
     def accion_login(self):
@@ -118,7 +118,7 @@ class SistemaEscolarApp:
         content.pack(fill="both", expand=True)
         
         tk.Button(content, text="+ Nuevo Grupo", bg=COLOR_PRIMARY, fg="white", font=FONT_LABEL, 
-                  command=self.popup_crear_ciclo).pack(anchor="w", pady=10)
+                command=self.popup_crear_ciclo).pack(anchor="w", pady=10)
         
         tk.Label(content, text="Doble clic en un grupo para gestionarlo:", fg="gray").pack(anchor="w")
 
@@ -185,10 +185,10 @@ class SistemaEscolarApp:
         frame_acciones.pack(fill="x", pady=10)
         
         tk.Button(frame_acciones, text="+ Agregar Alumno", bg=COLOR_SUCCESS, fg="white", 
-                  command=self.popup_agregar_alumno).pack(side="left", padx=5)
+                command=self.popup_agregar_alumno).pack(side="left", padx=5)
         
         tk.Button(frame_acciones, text="Capturar Calificaciones", bg="#FF9800", fg="black",
-                  command=self.placeholder_calificar).pack(side="left", padx=5)
+                command=self.placeholder_calificar).pack(side="left", padx=5)
 
         # Tabla de Alumnos
         tk.Label(content, text="Lista de Alumnos", font=FONT_SUBTITLE).pack(anchor="w", pady=(15, 5))

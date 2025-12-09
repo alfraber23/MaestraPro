@@ -75,13 +75,13 @@ def inicializar_db():
     # Ahora guardamos el máximo POR CAMPO FORMATIVO
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS config_trabajos (
-             id INTEGER PRIMARY KEY AUTOINCREMENT,
-             ciclo_id INTEGER,
-             campo_formativo TEXT,  -- <--- Agregamos esto
-             periodo INTEGER,
-             max_trabajos INTEGER DEFAULT 0,
-             FOREIGN KEY(ciclo_id) REFERENCES ciclos(id) ON DELETE CASCADE,
-             UNIQUE(ciclo_id, campo_formativo, periodo) -- Evita duplicados
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            ciclo_id INTEGER,
+            campo_formativo TEXT,  -- <--- Agregamos esto
+            periodo INTEGER,
+            max_trabajos INTEGER DEFAULT 0,
+            FOREIGN KEY(ciclo_id) REFERENCES ciclos(id) ON DELETE CASCADE,
+            UNIQUE(ciclo_id, campo_formativo, periodo) -- Evita duplicados
         )
     ''')
 
