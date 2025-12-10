@@ -87,3 +87,20 @@ def calcular_promedio_periodo(alumno_id, ciclo_id, campo, periodo, encuadre_dict
     suma_final += porcentaje_obtenido * (encuadre_dict['trabajos'] / 100)
     
     return round(suma_final, 2)
+
+# --- AGREGAR ESTO AL FINAL DE modulos/alumnos.py ---
+
+def obtener_calificaciones_alumno(alumno_id, campo, periodo):
+    """
+    Devuelve un diccionario con las notas guardadas.
+    Ej: {'tareas': 10.0, 'examen': 8.5, ...}
+    """
+    conn = conectar_db()
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT criterio, valor FROM calificaciones
+        WHERE alumno_id=? AND campo_formativo=? AND periodo=?
+    ''', (alumno_id, campo, periodo))
+    datos = dict(cursor.fetchall())
+    conn.close()
+    return datos
