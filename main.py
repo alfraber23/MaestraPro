@@ -1,11 +1,13 @@
 # main.py (Versión 3.2 - Con Módulo de Calificación)
 import tkinter as tk
+import datetime
 from tkinter import messagebox, simpledialog, ttk
 # Importamos lógica
 from modules.auth import login_usuario, registrar_usuario
 from modules.ciclos import obtener_ciclos_por_usuario, crear_ciclo, obtener_max_trabajos, establecer_max_trabajos
 from modules.alumnos import agregar_alumno, obtener_alumnos, registrar_calificacion, calcular_promedio_periodo, obtener_calificaciones_alumno
 from modules.alumnos import agregar_alumno, obtener_alumnos, registrar_calificacion, calcular_promedio_periodo, obtener_calificaciones_alumno, generar_reporte_boleta # <--- AGREGADO
+from modules.asistencia import obtener_asistencia_fecha, guardar_asistencia_bloque
 
 # --- CONSTANTES VISUALES ---
 FONT_TITLE = ("Arial", 16, "bold")
@@ -180,6 +182,9 @@ class SistemaEscolarApp:
         acciones.pack(fill="x", pady=10)
         tk.Button(acciones, text="+ Alumno", bg=COLOR_SUCCESS, fg="white", command=self.popup_add_alumno).pack(side="left", padx=5)
         
+        #BOTON PARA TOMAR ASISTENCIA
+        tk.Button(acciones, text="Pasar Lista", bg="#009688", fg="white", command=self.abrir_ventana_asistencia).pack(side="left", padx=5)
+
         # NUEVO BOTÓN PARA VER BOLETA
         tk.Button(acciones, text="Ver Boleta", bg="#9C27B0", fg="white", command=self.abrir_ventana_boleta).pack(side="left", padx=5)
 
@@ -195,6 +200,9 @@ class SistemaEscolarApp:
         self.tree_alumnos.pack(fill="both", expand=True)
         
         self.cargar_alumnos()
+
+    def abrir_ventana_asistencia(self):
+        VentanaAsistencia(self.root, self.ciclo_actual_id, self.ciclo_actual_nombre)
 
     def cargar_alumnos(self):
         for i in self.tree_alumnos.get_children(): self.tree_alumnos.delete(i)
@@ -243,6 +251,122 @@ class SistemaEscolarApp:
 
         VentanaBoleta(self.root, id_alumno, nombre_alumno, self.ciclo_actual_id, self.ciclo_actual_encuadre)
 
+
+# =========================================================
+# CLASE VENTANA ASISTENCIA (CHECKBOXES)
+# =========================================================
+class VentanaAsistencia:
+    def __init__(self, parent, ciclo_id, nombre_ciclo):
+        self.window = tk.Toplevel(parent)
+        self.window.title(f"Asistencia: {nombre_ciclo}")
+        self.window.geometry("450x600")
+        
+        self.ciclo_id = ciclo_id
+        
+        # --- Cabecera con Fecha ---
+        frame_top = tk.Frame(self.window, pady=10)
+        frame_top.pack(fill="x")
+        
+        tk.Label(frame_top, text="Fecha (DD/MM/AAAA):").pack(side="left", padx=10)
+        
+        self.ent_fecha = tk.Entry(frame_top, width=12)
+        # Poner fecha de hoy por defecto
+        hoy = datetime.datetime.now().strftime("%d/%m/%Y")
+        self.ent_fecha.insert(0, hoy)
+        self.ent_fecha.pack(side="left")
+        
+        tk.Button(frame_top, text="Cargar Historial", command=self.cargar_lista).pack(side="left", padx=10)
+        tk.Button(self.window, text="GUARDAR ASISTENCIA", bg="#009688", fg="white", font=("Arial", 12, "bold"), command=self.guardar_cambios).pack(fill="x", padx=20, pady=20)
+
+        # --- Botones de Selección Rápida ---
+        frame_tools = tk.Frame(self.window)
+        frame_tools.pack(fill="x", padx=20)
+        tk.Button(frame_tools, text="Marcar Todos", command=self.marcar_todos, font=("Arial", 8)).pack(side="left")
+        tk.Button(frame_tools, text="Desmarcar Todos", command=self.desmarcar_todos, font=("Arial", 8)).pack(side="left", padx=5)
+
+        # --- ÁREA SCROLLABLE (Truco técnico para listas largas) ---
+        # 1. Creamos un Canvas (lienzo) y un Scrollbar
+        self.canvas = tk.Canvas(self.window)
+        scrollbar = tk.Scrollbar(self.window, orient="vertical", command=self.canvas.yview)
+        
+        # 2. Creamos un Frame DENTRO del Canvas (aquí van los checkboxes)
+        self.scrollable_frame = tk.Frame(self.canvas)
+        
+        # 3. Configuramos el scroll
+        self.scrollable_frame.bind(
+            "<Configure>",
+            lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all"))
+        )
+        self.canvas.create_window((0, 0), window=self.scrollable_frame, anchor="nw")
+        self.canvas.configure(yscrollcommand=scrollbar.set)
+        
+        # 4. Empaquetamos todo
+        self.canvas.pack(side="left", fill="both", expand=True, padx=20, pady=10)
+        scrollbar.pack(side="right", fill="y")
+        
+        # Diccionario para guardar las variables de los checkboxes {alumno_id: IntVariable}
+        self.vars_asistencia = {} 
+        
+        # Botón Guardar (Siempre visible abajo)
+        tk.Button(self.window, text="GUARDAR ASISTENCIA", bg="#009688", fg="white", font=("Arial", 12, "bold"), command=self.guardar_cambios).pack(fill="x", padx=20, pady=20)
+
+        # Cargar alumnos al iniciar
+        self.cargar_lista()
+
+    def cargar_lista(self):
+        # 1. Limpiar lista visual anterior
+        for widget in self.scrollable_frame.winfo_children():
+            widget.destroy()
+        self.vars_asistencia = {}
+
+        # 2. Obtener alumnos del grupo
+        alumnos = obtener_alumnos(self.ciclo_id) # [(id, nombre), ...]
+        
+        # 3. Obtener si ya hay asistencia guardada para esa fecha
+        fecha = self.ent_fecha.get().strip()
+        historial = obtener_asistencia_fecha(self.ciclo_id, fecha) # {id: 1, id: 0}
+        
+        # 4. Generar Checkboxes
+        for al_id, al_nombre in alumnos:
+            # Variable de control (1=Check, 0=Uncheck)
+            var = tk.IntVar()
+            
+            # Lógica: Si hay historial, usamos eso. Si no, por defecto TODOS PRESENTES (1)
+            if al_id in historial:
+                var.set(historial[al_id])
+            else:
+                var.set(1) # Por defecto "Presente"
+            
+            self.vars_asistencia[al_id] = var
+            
+            # Crear el Checkbutton
+            c = tk.Checkbutton(self.scrollable_frame, text=al_nombre, variable=var, font=("Arial", 10), anchor="w")
+            c.pack(fill="x", pady=2)
+            
+    def guardar_cambios(self):
+        fecha = self.ent_fecha.get().strip()
+        if not fecha:
+            messagebox.showwarning("Error", "La fecha es obligatoria")
+            return
+
+        # Recolectar datos
+        datos_para_guardar = []
+        for al_id, var in self.vars_asistencia.items():
+            estado = var.get() # 1 o 0
+            datos_para_guardar.append((al_id, estado))
+            
+        # Enviar al backend
+        if guardar_asistencia_bloque(fecha, datos_para_guardar):
+            messagebox.showinfo("Éxito", f"Asistencia del {fecha} guardada.")
+            self.window.destroy()
+        else:
+            messagebox.showerror("Error", "No se pudo guardar la asistencia.")
+
+    def marcar_todos(self):
+        for var in self.vars_asistencia.values(): var.set(1)
+
+    def desmarcar_todos(self):
+        for var in self.vars_asistencia.values(): var.set(0)
 
 # =========================================================
 # CLASE VENTANA CREAR NUEVO CICLO (CONFIGURACIÓN)
