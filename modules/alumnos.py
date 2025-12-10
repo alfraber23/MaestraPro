@@ -104,3 +104,36 @@ def obtener_calificaciones_alumno(alumno_id, campo, periodo):
     datos = dict(cursor.fetchall())
     conn.close()
     return datos
+
+# --- AGREGAR AL FINAL DE modulos/alumnos.py ---
+
+def generar_reporte_boleta(alumno_id, ciclo_id, encuadre):
+    """
+    Genera un diccionario con la estructura:
+    {
+        "Lenguajes": {"p1": 9.5, "p2": 8.0, "p3": 0.0, "final": 5.8},
+        "Saberes...": {...}
+    }
+    """
+    # Definimos las materias (idealmente vendrían de config o DB, pero usaremos la lista estándar)
+    # Nota: Asegúrate que estos nombres coincidan con los que usas en el combo box
+    materias = ["Lenguajes", "Saberes y P.", "Etica Nat.", "De lo Humano"]
+    
+    reporte = {}
+    
+    for materia in materias:
+        reporte[materia] = {}
+        suma_promedios = 0.0
+        
+        for p in [1, 2, 3]:
+            # Reutilizamos tu función de cálculo que ya funciona perfecta
+            promedio = calcular_promedio_periodo(alumno_id, ciclo_id, materia, p, encuadre)
+            reporte[materia][f"p{p}"] = promedio
+            suma_promedios += promedio
+            
+        # Promedio final (simple división entre 3 por ahora)
+        # Ojo: Si quieres que solo promedie periodos cursados, habría que ajustar la lógica.
+        # Por ahora asumimos promedio anual simple.
+        reporte[materia]["final"] = round(suma_promedios / 3, 2)
+        
+    return reporte

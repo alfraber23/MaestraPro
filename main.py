@@ -5,6 +5,7 @@ from tkinter import messagebox, simpledialog, ttk
 from modules.auth import login_usuario, registrar_usuario
 from modules.ciclos import obtener_ciclos_por_usuario, crear_ciclo, obtener_max_trabajos, establecer_max_trabajos
 from modules.alumnos import agregar_alumno, obtener_alumnos, registrar_calificacion, calcular_promedio_periodo, obtener_calificaciones_alumno
+from modules.alumnos import agregar_alumno, obtener_alumnos, registrar_calificacion, calcular_promedio_periodo, obtener_calificaciones_alumno, generar_reporte_boleta # <--- AGREGADO
 
 # --- CONSTANTES VISUALES ---
 FONT_TITLE = ("Arial", 16, "bold")
@@ -180,6 +181,9 @@ class SistemaEscolarApp:
         acciones.pack(fill="x", pady=10)
         tk.Button(acciones, text="+ Alumno", bg=COLOR_SUCCESS, fg="white", command=self.popup_add_alumno).pack(side="left", padx=5)
         
+        # NUEVO BOTÓN PARA VER BOLETA
+        tk.Button(acciones, text="Ver Boleta", bg="#9C27B0", fg="white", command=self.abrir_ventana_boleta).pack(side="left", padx=5)
+
         # --- BOTÓN NARANJA CONECTADO ---
         tk.Button(acciones, text="Capturar Calificaciones", bg="#FF9800", fg="black", command=self.abrir_ventana_calificar).pack(side="left", padx=5)
 
@@ -223,6 +227,86 @@ class SistemaEscolarApp:
 
         # 2. Abrir Ventana Popup (Toplevel)
         VentanaCalificar(self.root, id_alumno, nombre_alumno, self.ciclo_actual_id, self.ciclo_actual_encuadre)
+
+    def abrir_ventana_boleta(self):
+        seleccion = self.tree_alumnos.selection()
+        if not seleccion:
+            messagebox.showwarning("Atención", "Selecciona un alumno para ver su boleta.")
+            return
+
+        item = self.tree_alumnos.item(seleccion, "values")
+        id_alumno = int(item[0])
+        nombre_alumno = item[1]
+
+        if self.ciclo_actual_encuadre is None:
+            messagebox.showerror("Error", "Error de carga de encuadre.")
+            return
+
+        VentanaBoleta(self.root, id_alumno, nombre_alumno, self.ciclo_actual_id, self.ciclo_actual_encuadre)
+
+
+# =========================================================
+# CLASE VENTANA BOLETA (REPORTE)
+# =========================================================
+class VentanaBoleta:
+    def __init__(self, parent, alumno_id, nombre, ciclo_id, encuadre):
+        self.window = tk.Toplevel(parent)
+        self.window.title(f"Boleta: {nombre}")
+        self.window.geometry("600x400")
+        
+        tk.Label(self.window, text=f"Boleta de Calificaciones", font=("Arial", 14, "bold"), fg="#9C27B0").pack(pady=10)
+        tk.Label(self.window, text=f"Alumno: {nombre}", font=("Arial", 12)).pack()
+        
+        # Frame para la tabla
+        frame_tabla = tk.Frame(self.window, padx=20, pady=20)
+        frame_tabla.pack(fill="both", expand=True)
+        
+        # Usamos Treeview para mostrar la boleta
+        cols = ("Materia", "Periodo 1", "Periodo 2", "Periodo 3", "Promedio Final")
+        self.tree = ttk.Treeview(frame_tabla, columns=cols, show='headings', height=8)
+        
+        self.tree.heading("Materia", text="Campo Formativo")
+        self.tree.heading("Periodo 1", text="P1")
+        self.tree.heading("Periodo 2", text="P2")
+        self.tree.heading("Periodo 3", text="P3")
+        self.tree.heading("Promedio Final", text="Final")
+        
+        self.tree.column("Materia", width=150)
+        self.tree.column("Periodo 1", width=50, anchor="center")
+        self.tree.column("Periodo 2", width=50, anchor="center")
+        self.tree.column("Periodo 3", width=50, anchor="center")
+        self.tree.column("Promedio Final", width=60, anchor="center")
+        
+        self.tree.pack(fill="both", expand=True)
+        
+        # Botón Cerrar
+        tk.Button(self.window, text="Cerrar", command=self.window.destroy).pack(pady=10)
+        
+        # Cargar datos
+        self.cargar_datos(alumno_id, ciclo_id, encuadre)
+
+    def cargar_datos(self, uid, cid, enc):
+        datos = generar_reporte_boleta(uid, cid, enc)
+        
+        promedio_global_suma = 0
+        count = 0
+        
+        for materia, periodos in datos.items():
+            p1 = periodos['p1']
+            p2 = periodos['p2']
+            p3 = periodos['p3']
+            final = periodos['final']
+            
+            self.tree.insert("", "end", values=(materia, p1, p2, p3, final))
+            
+            promedio_global_suma += final
+            count += 1
+            
+        # Fila de Promedio General
+        if count > 0:
+            gral = round(promedio_global_suma / count, 2)
+            self.tree.insert("", "end", values=("PROMEDIO GRAL", "-", "-", "-", gral), tags=('total',))
+            self.tree.tag_configure('total', font=('Arial', 10, 'bold'), background='#E1BEE7')
 
 # =========================================================
 # CLASE VENTANA POPUP DE CALIFICACIÓN
@@ -298,7 +382,7 @@ class VentanaCalificar:
         
         # Botón Guardar
         tk.Button(self.window, text="GUARDAR CALIFICACIÓN", bg=COLOR_SUCCESS, fg="white", font=("Arial", 12, "bold"),
-                  command=self.guardar_datos).pack(fill="x", padx=20, pady=10)
+                command=self.guardar_datos).pack(fill="x", padx=20, pady=10)
         
         # Label Promedio
         self.lbl_resultado = tk.Label(self.window, text="Promedio: -", font=("Arial", 14, "bold"))
