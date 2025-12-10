@@ -128,13 +128,12 @@ class SistemaEscolarApp:
                 }
 
     def popup_crear_ciclo(self):
-        nom = simpledialog.askstring("Nuevo", "Nombre del Grupo:")
-        if nom:
-            # Encuadre default
-            enc = {'tareas':10, 'trabajos':45, 'proyecto':5, 'valores':20, 'examen':20}
-            crear_ciclo(self.usuario_id, nom, enc)
-            self.cargar_ciclos()
+        # En lugar de usar simpledialog, llamamos a nuestra nueva ventana personalizada
+        VentanaNuevoCiclo(self.root, self.usuario_id, self.callback_ciclo_creado)
 
+    def callback_ciclo_creado(self):
+        # Esta función se ejecutará cuando la ventana secundaria termine con éxito
+        self.cargar_ciclos()
     def seleccionar_ciclo(self, event):
         item = self.tree_ciclos.selection()
         if not item: return
@@ -244,6 +243,91 @@ class SistemaEscolarApp:
 
         VentanaBoleta(self.root, id_alumno, nombre_alumno, self.ciclo_actual_id, self.ciclo_actual_encuadre)
 
+
+# =========================================================
+# CLASE VENTANA CREAR NUEVO CICLO (CONFIGURACIÓN)
+# =========================================================
+class VentanaNuevoCiclo:
+    def __init__(self, parent, usuario_id, callback_exito):
+        self.window = tk.Toplevel(parent)
+        self.window.title("Nuevo Grupo y Encuadre")
+        self.window.geometry("400x450")
+        
+        self.usuario_id = usuario_id
+        self.callback = callback_exito
+        
+        # --- UI ---
+        tk.Label(self.window, text="Configuración del Grupo", font=("Arial", 14, "bold"), fg="#2196F3").pack(pady=15)
+        
+        # Nombre
+        tk.Label(self.window, text="Nombre del Grupo (Ej. Matemáticas A):").pack(anchor="w", padx=20)
+        self.ent_nombre = tk.Entry(self.window)
+        self.ent_nombre.pack(fill="x", padx=20, pady=5)
+        
+        tk.Label(self.window, text="Defina los porcentajes de evaluación (Suma = 100%):", font=("Arial", 9, "bold")).pack(pady=(15, 5))
+        
+        # Frame para los porcentajes
+        frame_pct = tk.Frame(self.window, padx=20)
+        frame_pct.pack(fill="x")
+        
+        self.entries = {}
+        criterios = [
+            ("tareas", "Tareas"),
+            ("trabajos", "Trabajos / Actividades"),
+            ("proyecto", "Proyecto Final"),
+            ("valores", "Valores / Asistencia"),
+            ("examen", "Examen Escrito")
+        ]
+        
+        # Valores por defecto para ayudar al usuario
+        defaults = [10, 45, 5, 20, 20]
+        
+        for i, (key, label) in enumerate(criterios):
+            row = tk.Frame(frame_pct)
+            row.pack(fill="x", pady=2)
+            
+            tk.Label(row, text=f"{label}:", width=20, anchor="w").pack(side="left")
+            ent = tk.Entry(row, width=5)
+            ent.insert(0, str(defaults[i]))
+            ent.pack(side="right")
+            tk.Label(row, text="%").pack(side="right")
+            
+            self.entries[key] = ent
+            
+        # Botón Validar y Crear
+        tk.Button(self.window, text="CREAR GRUPO", bg="#4CAF50", fg="white", font=("Arial", 11, "bold"),
+                  command=self.guardar_ciclo).pack(fill="x", padx=20, pady=20)
+        
+    def guardar_ciclo(self):
+        nombre = self.ent_nombre.get().strip()
+        if not nombre:
+            messagebox.showwarning("Error", "Debes ponerle un nombre al grupo.")
+            return
+
+        # Validar porcentajes
+        try:
+            encuadre = {}
+            total = 0
+            for key, ent in self.entries.items():
+                val = float(ent.get())
+                if val < 0: raise ValueError
+                encuadre[key] = val
+                total += val
+            
+            # VALIDACIÓN CRÍTICA: MATEMÁTICAS
+            if abs(total - 100.0) > 0.1: # Usamos tolerancia pequeña por decimales flotantes
+                messagebox.showerror("Error Matemático", f"Los porcentajes suman {total}%. \nDeben sumar exactamente 100%.")
+                return
+
+            # Si llegamos aquí, todo está bien. Guardamos en BD.
+            crear_ciclo(self.usuario_id, nombre, encuadre)
+            
+            messagebox.showinfo("Éxito", f"Grupo '{nombre}' creado correctamente.")
+            self.callback() # Actualizamos la tabla de atrás
+            self.window.destroy() # Cerramos esta ventana
+            
+        except ValueError:
+            messagebox.showerror("Error", "Asegúrate de ingresar solo números en los porcentajes.")
 
 # =========================================================
 # CLASE VENTANA BOLETA (REPORTE)
