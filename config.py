@@ -2,17 +2,16 @@
 import sys
 import os
 
+
 def obtener_ruta_base():
-    """
-    Detecta si estamos corriendo como script (.py) o como ejecutable congelado (.exe/.app).
-    """
+    """ Define si estamos en modo EXE o en modo CÓDIGO """
     if getattr(sys, 'frozen', False):
-        # Si es ejecutable, la ruta es donde está el archivo .exe
+        # Si es .exe, usa la carpeta donde está el ejecutable
         return os.path.dirname(sys.executable)
     else:
-        # Si es script, la ruta es donde está este archivo
+        # Si es código normal, usa la carpeta actual
         return os.path.dirname(os.path.abspath(__file__))
 
-# Esta variable la importaremos en los otros archivos
+
 BASE_DIR = obtener_ruta_base()
 DB_PATH = os.path.join(BASE_DIR, "sistema_escolar.db")

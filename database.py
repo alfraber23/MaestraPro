@@ -1,11 +1,12 @@
 # database.py ACTUALIZADO (v3.1)
 import sqlite3
 import os
+from config import DB_PATH  # <--- IMPORTANTE: Usamos la ruta inteligente
 
-DB_NAME = "sistema_escolar.db"
 
 def conectar_db():
-    return sqlite3.connect(DB_NAME)
+    return sqlite3.connect(DB_PATH)  # <--- Usamos esa variable
+
 
 def inicializar_db():
     conexion = conectar_db()
@@ -69,7 +70,7 @@ def inicializar_db():
             FOREIGN KEY(alumno_id) REFERENCES alumnos(id) ON DELETE CASCADE
         )
     ''')
-    
+
     # --- CAMBIO IMPORTANTE AQUÍ ---
     # 6. Tabla de CONFIGURACIÓN DE TRABAJOS
     # Ahora guardamos el máximo POR CAMPO FORMATIVO
@@ -89,9 +90,10 @@ def inicializar_db():
     conexion.close()
     print("Base de datos (v3.1) inicializada correctamente.")
 
+
 if __name__ == "__main__":
-    if os.path.exists(DB_NAME):
-        os.remove(DB_NAME)
+    if os.path.exists(DB_PATH):
+        os.remove(DB_PATH)
         print("Base de datos anterior eliminada para actualización.")
-    
+
     inicializar_db()
