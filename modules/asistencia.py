@@ -1,12 +1,15 @@
 # modulos/asistencia.py
 import sqlite3
 import os
+import sys
+from config import DB_PATH
+# Truco para importar config desde subcarpetas
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DB_PATH = os.path.join(BASE_DIR, "sistema_escolar.db")
 
 def conectar_db():
     return sqlite3.connect(DB_PATH)
+
 
 def obtener_asistencia_fecha(ciclo_id, fecha):
     """
@@ -15,7 +18,7 @@ def obtener_asistencia_fecha(ciclo_id, fecha):
     """
     conn = conectar_db()
     cursor = conn.cursor()
-    
+
     # Hacemos un JOIN para asegurarnos de traer solo alumnos de ese ciclo
     cursor.execute('''
         SELECT a.alumno_id, a.presente 
@@ -23,10 +26,11 @@ def obtener_asistencia_fecha(ciclo_id, fecha):
         JOIN alumnos al ON a.alumno_id = al.id
         WHERE al.ciclo_id = ? AND a.fecha = ?
     ''', (ciclo_id, fecha))
-    
+
     datos = dict(cursor.fetchall())
     conn.close()
     return datos
+
 
 def guardar_asistencia_bloque(fecha, lista_datos):
     """
@@ -35,7 +39,7 @@ def guardar_asistencia_bloque(fecha, lista_datos):
     """
     conn = conectar_db()
     cursor = conn.cursor()
-    
+
     try:
         # Usamos una transacción para que sea rápido y seguro
         for alumno_id, estado in lista_datos:
@@ -44,13 +48,13 @@ def guardar_asistencia_bloque(fecha, lista_datos):
                 DELETE FROM asistencia 
                 WHERE alumno_id = ? AND fecha = ?
             ''', (alumno_id, fecha))
-            
+
             # 2. Insertamos el nuevo estado
             cursor.execute('''
                 INSERT INTO asistencia (alumno_id, fecha, presente)
                 VALUES (?, ?, ?)
             ''', (alumno_id, fecha, estado))
-            
+
         conn.commit()
         return True
     except Exception as e:

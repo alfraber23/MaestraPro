@@ -2,14 +2,15 @@
 import sqlite3
 import hashlib
 import os
+import sys
+from config import DB_PATH
+# Truco para importar config desde subcarpetas
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-# --- Configuración de Rutas ---
-# Esto asegura que siempre encuentre la DB, sin importar desde dónde ejecutes el script
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DB_PATH = os.path.join(BASE_DIR, "sistema_escolar.db")
 
 def conectar_db():
     return sqlite3.connect(DB_PATH)
+
 
 def hashear_password(password):
     """
@@ -18,6 +19,7 @@ def hashear_password(password):
     """
     return hashlib.sha256(password.encode('utf-8')).hexdigest()
 
+
 def registrar_usuario(username, password):
     """
     Intenta registrar un nuevo usuario.
@@ -25,15 +27,15 @@ def registrar_usuario(username, password):
     """
     if not username or not password:
         return False, "Usuario y contraseña no pueden estar vacíos."
-    
+
     conn = conectar_db()
     cursor = conn.cursor()
-    
+
     password_encriptada = hashear_password(password)
-    
+
     try:
-        cursor.execute("INSERT INTO usuarios (username, password) VALUES (?, ?)", 
-                    (username, password_encriptada))
+        cursor.execute("INSERT INTO usuarios (username, password) VALUES (?, ?)",
+                       (username, password_encriptada))
         conn.commit()
         conn.close()
         return True, f"Usuario '{username}' registrado exitosamente."
@@ -44,6 +46,7 @@ def registrar_usuario(username, password):
         conn.close()
         return False, f"Error desconocido: {e}"
 
+
 def login_usuario(username, password):
     """
     Verifica las credenciales.
@@ -51,16 +54,17 @@ def login_usuario(username, password):
     """
     conn = conectar_db()
     cursor = conn.cursor()
-    
+
     password_encriptada = hashear_password(password)
-    
+
     # Buscamos si existe esa combinación exacta de usuario y hash
-    cursor.execute("SELECT id FROM usuarios WHERE username=? AND password=?", 
-                (username, password_encriptada))
+    cursor.execute("SELECT id FROM usuarios WHERE username=? AND password=?",
+                   (username, password_encriptada))
     resultado = cursor.fetchone()
     conn.close()
-    
+
     if resultado:
-        return resultado[0] # Retornamos el ID (útil para saber de quién son los grupos)
+        # Retornamos el ID (útil para saber de quién son los grupos)
+        return resultado[0]
     else:
         return None

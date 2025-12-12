@@ -1,13 +1,15 @@
 # modulos/ciclos.py
 import sqlite3
 import os
+import sys
+from config import DB_PATH
+# Truco para importar config desde subcarpetas
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-# Rutas relativas para que funcione siempre
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DB_PATH = os.path.join(BASE_DIR, "sistema_escolar.db")
 
 def conectar_db():
     return sqlite3.connect(DB_PATH)
+
 
 def crear_ciclo(usuario_id, nombre, encuadre):
     """
@@ -20,7 +22,7 @@ def crear_ciclo(usuario_id, nombre, encuadre):
         cursor.execute('''
             INSERT INTO ciclos (usuario_id, nombre, pct_tareas, pct_trabajos, pct_proyecto, pct_valores, pct_examen)
             VALUES (?, ?, ?, ?, ?, ?, ?)
-        ''', (usuario_id, nombre, encuadre['tareas'], encuadre['trabajos'], 
+        ''', (usuario_id, nombre, encuadre['tareas'], encuadre['trabajos'],
               encuadre['proyecto'], encuadre['valores'], encuadre['examen']))
         conn.commit()
         ciclo_id = cursor.lastrowid
@@ -30,6 +32,7 @@ def crear_ciclo(usuario_id, nombre, encuadre):
         conn.close()
         print(f"Error al crear ciclo: {e}")
         return None
+
 
 def obtener_ciclos_por_usuario(usuario_id):
     conn = conectar_db()
@@ -44,6 +47,8 @@ def obtener_ciclos_por_usuario(usuario_id):
     return resultados
 
 # --- AQUÍ ESTÁ LA SOLUCIÓN A TU PROBLEMA DE TRABAJOS ---
+
+
 def establecer_max_trabajos(ciclo_id, campo, periodo, cantidad):
     """
     Guarda cuántos trabajos valen el 100% para UNA materia y UN periodo específico.
@@ -66,6 +71,7 @@ def establecer_max_trabajos(ciclo_id, campo, periodo, cantidad):
         return False
     finally:
         conn.close()
+
 
 def obtener_max_trabajos(ciclo_id, campo, periodo):
     """Devuelve el número de trabajos configurados. Si no existe, devuelve 0."""
